@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.env
+.venv/
+*.sqlite3
+
+# Pytest cache
+.pytest_cache/
+
+# VSCode
+.vscode/
+
+# Created files when running the app
+data/
+data_test/
+fonts/
+tests/resources/
+
+# Streamlit cache
+.streamlit/
+
+# Model files
+models/
