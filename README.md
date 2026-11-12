@@ -1,141 +1,108 @@
-# Ask My Document - Backend MVP
+# Ask My Document — Backend MVP
 
-Ứng dụng hỏi đáp tài liệu PDF sử dụng **RAG (Retrieval Augmented Generation)** và **LLM local** (.bin).  
-Người dùng có thể upload tài liệu PDF, hệ thống sẽ trích xuất dữ liệu, lưu vào FAISS và trả lời câu hỏi dựa trên nội dung tài liệu.
+A PDF question-answering application using **Retrieval-Augmented Generation (RAG)** and a **local LLM**. Upload PDFs, extract and index their text with FAISS, and ask questions using retrieved document context.
 
----
+The current implementation uses **FastAPI + Streamlit**. NestJS and React are planned extensions, not part of the current application.
 
-## 🚀 Cài đặt
+## Current Features
+
+- Upload one or multiple PDF documents through the Streamlit interface.
+- Extract text and split it into chunks with document and page metadata.
+- Store embeddings in a separate FAISS index for each document.
+- Retrieve context across selected documents and rerank the combined results.
+- Generate answers with a local LLM.
+- Display source excerpts and links to the original PDFs.
+- Expose upload, query, PDF download, and filename lookup APIs through FastAPI.
+
+## Installation
+
+The commands below use Bash on Linux, macOS, or WSL with Python installed as `python3`. On Windows with Git Bash and a Windows Python installation, use `python` to create the environment and `source .venv/Scripts/activate` to activate it.
 
 ```bash
-# Clone dự án
-git clone https://github.com/TTDATN-QTV/ask-my-document-backend.git
+git clone https://github.com/tlavu2004/ask-my-document-backend.git
 cd ask-my-document-backend
 
-# Tạo virtual environment
-python -m venv .venv
-Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
-.venv\Scripts\activate
+python3 -m venv .venv
+source .venv/bin/activate
 
-# Cập nhật pip và cài đặt dependencies
 python -m pip install --upgrade pip
-pip install -r requirements.txt
+python -m pip install -r requirements.txt
 ```
 
-## ⚡️ Chạy Backend (FastAPI)
+Run commands from the repository root. Prepare the local model before asking questions. Embedding, reranking, and tokenizer assets may require network access on first use.
+
+## Run the Backend
 
 ```bash
-uvicorn app.main:app --reload
+python -m uvicorn app.main:app --reload
 ```
 
-Truy cập API docs tại: http://127.0.0.1:8000/docs
+Open the [API documentation](http://127.0.0.1:8000/docs).
 
-## 🖥️ Chạy giao diện MVP (Streamlit)
+## Run the MVP Interface
+
+In a second Bash terminal, open the repository root, activate the same virtual environment, and start Streamlit:
 
 ```bash
-Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
-.venv\Scripts\activate
+source .venv/bin/activate
 python -m streamlit run mvp_ui/main.py
 ```
 
-## 📥 Tải LLM và dữ liệu mẫu
-- Tải LLM (GGML .bin): `https://huggingface.co/TheBloke/Llama-2-7B-Chat-GGML/tree/main`
-- Tải file PDF mẫu: `https://drive.google.com/drive/folders/1_0JWnoLTJsbmswUGs5z1ULd7u4fqfzEf?usp=drive_link`
+The current interface expects the backend at `http://localhost:8000`.
 
-## 🔀 Đổi LLM khác
-Khi muốn đổi sang LLM khác:
-- Tải GGML .bin về vè đặt trong thư ục models/ tại thư mục gốc.
-- Thay `model_path` trong file `app/utils/llm_client.py`
+## Local Model and Sample Documents
 
-```python
-# Existing code...
+The current `LocalLLM` implementation uses CTransformers with this default model path:
 
-class LocalLLM:
-    def __init__(self, model_path="models/llama-2-7b-chat.ggmlv3.q4_1.bin"): # <-- Thay model_path tại đây
-        self.llm = CTransformers(
-            model=model_path,
-            model_type="llama",
-            config={
-                "max_new_tokens": 256,
-                "temperature": 0.01
-            }
-        )
-
-# Existing code...
+```text
+models/llama-2-7b-chat.ggmlv3.q4_1.bin
 ```
 
+- [Model files referenced by the current implementation](https://huggingface.co/TheBloke/Llama-2-7B-Chat-GGML/tree/main)
+- [Sample PDFs](https://drive.google.com/drive/folders/1_0JWnoLTJsbmswUGs5z1ULd7u4fqfzEf?usp=drive_link)
 
-## 📂 Cấu trúc thư mục
+Place the compatible model file in `models/` at the repository root. To change models, update `LocalLLM` in `app/utils/llm_client.py`, including the model type and tokenizer configuration as needed. Model files are not included in this repository.
+
+You can also generate a sample PDF locally:
+
+```bash
+python scripts/make_sample_pdf.py
 ```
+
+The generated file is written to `tests/resources/sample.pdf`. The script uses Windows Arial when available; its fallback may download a font.
+
+## Project Structure
+
+```text
 ask-my-document-backend/
 ├── app/
-│   ├── rag/
-│   │   ├── retriever.py
-│   │   └── rag_pipeline.py
-│   ├── routes/
-│   │   ├── upload.py
-│   │   └── query.py
-│   ├── services/
-│   │   ├── document_service.py
-│   │   └── chat_service.py
-│   ├── utils/
-│   │   ├── pdf_parser.py
-│   │   └── llm_client.py
+│   ├── rag/                 # Retrieval, reranking, and answer pipeline
+│   ├── routes/              # Upload, query, and document endpoints
+│   ├── services/            # Document processing and query orchestration
+│   ├── utils/               # PDF parsing and LLM clients
 │   ├── config.py
 │   └── main.py
-│
-├── data/
-│   ├── uploads/
-│   └── index/
-│
-├── fonts/
-│
-├── scripts/
-│   └── llama-2-7b-chat.ggmlv3.q4_1.bin
-│
-├── mvp_ui/
-│   ├── main.py
-│   ├── components/
-│   └── utils/
-│
-├── scripts/
-│   └── make_sample_pdf.py
-│
-├── tests/
-│   ├── rag/
-│   │   ├── test_rag_pipeline.py
-│   │   └── test_retriever.py
-│   ├── resources/
-│   │   └── sample.pdf
-│   ├── routes/
-│   │   ├── test_upload.py
-│   │   └── test_query.py
-│   ├── services/
-│   │   ├── test_document_service.py
-│   │   └── test_chat_service.py
-│   ├── utils/
-│   │   ├── build_mock_index.py
-│   │   └── test_llm_client.py
-│   └── conftest.py
-│
+├── docs/
+│   └── IMPROVEMENT_PLAN.md
+├── mvp_ui/                  # Current Streamlit interface
+├── scripts/                 # Environment setup and sample PDF generation
+├── tests/                   # Route, service, retrieval, and LLM tests
+├── data/                    # Generated uploads and indexes
+├── models/                  # Local model files, supplied separately
+├── fonts/                   # Generated/cached sample PDF fonts
+├── .env.example
 ├── requirements.txt
-├── .gitignore
 └── README.md
 ```
 
-## ✨ Chức năng
+Generated data, model files, fonts, and sample PDFs are excluded from Git. Test-mode data uses `data_test/`; configuration inconsistencies are tracked in the improvement plan.
 
-- 📄 Upload tài liệu PDF.
-- 🔎 Tách văn bản, chia nhỏ theo đoạn.
-- 📦 Lưu embedding vào FAISS để truy vấn nhanh.
-- 💬 Hỏi đáp với LLM local (sử dụng mô hình .bin).
-- 🌐 REST API (FastAPI) + Giao diện MVP (Streamlit).
-- ⚙️ Hỗ trợ nhiều tài liệu, metadata theo dõi context.
-- 🚀 Dễ mở rộng sang Hugging Face API hoặc LLM khác.
+## Known Limitations
 
-## 🔮 Định hướng phát triển
+This is an MVP with outstanding correctness, test, performance, and data-management issues. The current test suite needs alignment with the implemented API contracts. Authentication, document ownership checks, persisted conversations, and background indexing jobs are not implemented. Scanned PDFs require OCR, which is not currently supported.
 
-- Hỗ trợ nhiều định dạng tài liệu (DOCX, TXT, Markdown).
-- Tích hợp xác thực người dùng & phân quyền.
-- Tích hợp microservice + frontend riêng biệt.
-- Thêm chức năng tìm kiếm đa tài liệu.
+The detailed review and acceptance criteria are recorded in the [Improvement and Expansion Plan](docs/IMPROVEMENT_PLAN.md).
+
+## Roadmap
+
+See the [Improvement and Expansion Plan](docs/IMPROVEMENT_PLAN.md) for the roadmap, target architecture, priorities, and acceptance criteria.
