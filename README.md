@@ -31,6 +31,22 @@ python -m pip install -r requirements.txt
 
 Run commands from the repository root. Prepare the local model before asking questions. Embedding, reranking, and tokenizer assets may require network access on first use.
 
+Alternatively, use the Bash setup script to create or reuse `.venv`, install dependencies, and start the backend:
+
+```bash
+bash scripts/setup.sh
+```
+
+The script resolves the project root from its own location, so it can also be invoked by its full path from another directory. It supports Linux, macOS, WSL, and Git Bash with Python available in PATH. Existing virtual environments must match the selected operating environment; Windows and WSL environments are not interchangeable.
+
+To install dependencies without starting the backend:
+
+```bash
+bash scripts/setup.sh --no-start
+```
+
+The script does not activate the environment in your current terminal. Use the activation command above for subsequent manual commands. When starting the backend, it loads an optional root `.env` with python-dotenv before importing the app; existing environment variables take precedence. Keep `.env` values valid for the current implementation, particularly `APP_ENV` (see the known configuration issues in the improvement plan).
+
 ## Run the Backend
 
 ```bash
